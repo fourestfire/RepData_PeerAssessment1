@@ -3,6 +3,11 @@
 
 ## Loading and preprocessing the data
 
+The variables included in this dataset are:
+    steps: Number of steps taking in a 5-minute interval (missing values are coded as NA)
+    date: The date on which the measurement was taken in YYYY-MM-DD format
+    interval: Identifier for the 5-minute interval in which measurement was taken
+
 
 ```r
 data <- read.csv("activity.csv")
@@ -54,8 +59,8 @@ median1
 ```r
 interval <- aggregate(data$steps, list(data = data$interval), mean, na.rm = TRUE)
 plot(interval$data, interval$x, type = "l",
-     main = "Average Daily Activity Pattern",
-     xlab = "Time of Day",
+     main = "Average Daily Activity Pattern (5 min intervals)",
+     xlab = "Time of Day (Military Time)",
      ylab = "Average Steps Taken")
 ```
 
@@ -70,8 +75,9 @@ maxinterval[,1]    ## 5 minute time interval with the most average steps
 ## [1] 835
 ```
 
-
 ## Imputing missing values
+
+There are many missing rows, so we attempt to imput the missing values. Logic for imputing missing values: if stepcount for a given row is NA, replace it in the mean step count for that 5-minute interval (as calculated in the previous section).
 
 
 ```r
@@ -83,12 +89,12 @@ sum(is.na(data$steps)) ## Total number of rows with missing data
 ```
 
 ```r
-## Logic for imputing missing values: if step count for a given row is NA, put in the mean step count for that 5-minute interval. To do this, iterate over each row of the dataset.
-
+## Iterate over each row of the dataset to replace NA values
 for (i in 1:length(data$steps)) {                                
     if (is.na(data[i,1])) {
-       a <- data[i,3] ##find the interval value for the missing row
-       data[i,1] = 10
+       a <- data[i,3] ## find the interval value for the missing row
+       b <- interval[interval$data == a,] ## find the mean to match that interval value
+       data[i,1] = b[,2] ##replace the NA value
        }
 }
  
@@ -105,13 +111,16 @@ hist(steps2$x,
 
 ![](PA1_template_files/figure-html/unnamed-chunk-4-1.png) 
 
+Due to our logic, the mean stays the same as in the original data set, but the median changes slightly.
+
+
 ```r
 mean2 <- mean(steps2$x, na.rm = TRUE) ## New mean total steps per day
 mean2
 ```
 
 ```
-## [1] 9731.934
+## [1] 10766.19
 ```
 
 ```r
@@ -120,7 +129,7 @@ median2
 ```
 
 ```
-## [1] 10395
+## [1] 10766.19
 ```
 
 ```r
@@ -129,7 +138,7 @@ meandifference ## what is the difference between the means from the first and se
 ```
 
 ```
-## [1] 1034.254
+## [1] 0
 ```
 
 ```r
@@ -138,7 +147,7 @@ mediandifference ## what is the difference between the medians from the first an
 ```
 
 ```
-## [1] 370
+## [1] -1.188679
 ```
 
 ## Are there differences in activity patterns between weekdays and weekends?
@@ -146,4 +155,35 @@ mediandifference ## what is the difference between the medians from the first an
 
 ```r
 data2$weektype <- weekdays(as.Date(data2$date)) ## add column for weekday vs. weekend
+
+for (i in 1:length(data2$weektype)) {                                
+    if (data2[i,4] == "Saturday" || data2[i,4] == "Sunday") {
+        data2[i,4] <- "weekend"
+    } else {
+        data2[i,4] <- "weekday"
+    }
+}
+
+data2$weektype <- as.factor(data2$weektype) ## convert new column to factor
+
+## subsetting original data to calculate means for weekday and weekends, then recombining with rbind
+onlyweekdays <- data2[data2$weektype == "weekday",]
+onlyweekends <- data2[data2$weektype == "weekend",]
+weekdayavg <- aggregate(onlyweekdays$steps, list(data = onlyweekdays$interval), mean)
+weekdayavg$weektype <- "weekday"
+weekendavg <- aggregate(onlyweekends$steps, list(data = onlyweekends$interval), mean)
+weekendavg$weektype <- "weekend"
+intervals2 <- rbind(weekdayavg, weekendavg)
+
+library(ggplot2) ## using ggplot for the panel plot!
+g <- ggplot(intervals2, aes(data,x)) + 
+    geom_line(color = "olivedrab") + 
+    geom_point(color = "olivedrab") +
+    xlab("Time of Day (Military Time)") + 
+    ylab("Average Steps Taken") +
+    ggtitle("Average Daily Activity Pattern") + 
+    facet_grid(weektype ~ .) 
+g
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-6-1.png) 
