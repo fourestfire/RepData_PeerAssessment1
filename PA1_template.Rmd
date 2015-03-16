@@ -24,8 +24,10 @@ hist(steps$x,
      xlab = "# of Steps",
      ylab = "Frequency")
 
-mean(steps$x, na.rm = TRUE) ## Mean total steps per day
-median(steps$x, na.rm = TRUE) ## Median total steps per day
+mean1 <- mean(steps$x, na.rm = TRUE) ## Mean total steps per day
+mean1
+median1 <- median(steps$x, na.rm = TRUE) ## Median total steps per day
+median1
 
 ```
     
@@ -53,13 +55,39 @@ sum(is.na(data$steps)) ## Total number of rows with missing data
 
 ## Logic for imputing missing values: if step count for a given row is NA, put in the mean step count for that 5-minute interval. To do this, iterate over each row of the dataset.
 
-    ##for (i in 1:length(data)) {                                
-   ##     if is.na(data[i,1]) {
-  ##          interval[]
-  ##          data[i,1] = mean of that date's 
-  ##          }
-  ##  }
+for (i in 1:length(data$steps)) {                                
+    if (is.na(data[i,1])) {
+       a <- data[i,3] ##find the interval value for the missing row
+       data[i,1] = 10
+       }
+}
+ 
+data2 <- data ## new dataset with filled in missing values
+data <- read.csv("activity.csv") ## reset original dataframe
+
+steps2 <- aggregate(data2$steps, list(data2 = data2$date), sum)
+hist(steps2$x, 
+     breaks = 30,
+     main = "Distribution of Total Steps per Day, NAs imputed",
+     xlab = "# of Steps",
+     ylab = "Frequency")
+
+mean2 <- mean(steps2$x, na.rm = TRUE) ## New mean total steps per day
+mean2
+median2 <- median(steps2$x, na.rm = TRUE) ## New median total steps per day
+median2
+
+meandifference <- mean1 - mean2
+meandifference ## what is the difference between the means from the first and second data sets?
+
+mediandifference <- median1 - median2
+mediandifference ## what is the difference between the medians from the first and second data sets?
 
 ```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r echo =TRUE}
+data2$weektype <- weekdays(as.Date(data2$date)) ## add column for weekday vs. weekend
+    
+```
